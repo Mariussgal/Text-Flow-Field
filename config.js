@@ -1,9 +1,9 @@
 const CONFIG = {
     
-    TEXT: "MARIUS GAL",
+    TEXT: "MARIUS",
     
   
-    FONT_SIZE: 80,
+    FONT_SIZE: 90,
     
  
     PARTICLE_SIZE: 2,
@@ -14,11 +14,10 @@ const CONFIG = {
     
 
     ORBITAL_PARTICLES_COUNT: 500,
-    EXPLOSION_PARTICLES: 300,
     CURSOR_PARTICLES_COUNT: 12,
     
  
-    ATTRACTION_STRENGTH: 150, 
+    ATTRACTION_STRENGTH: 200, 
     FRICTION: 0.97, 
     
 
