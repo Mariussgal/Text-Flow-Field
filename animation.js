@@ -1,3 +1,7 @@
+function isMouseMoving() {
+    return Math.abs(mouseVelocityX) > 0.1 || Math.abs(mouseVelocityY) > 0.1;
+}
+
 function animate() {
     const canvas = document.getElementById('particleCanvas');
     const ctx = canvas.getContext('2d');
@@ -7,7 +11,7 @@ function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     outlineCtx.clearRect(0, 0, outlineCanvas.width, outlineCanvas.height);
 
-    updateAndDrawOutlines(outlineCtx);
+    updateMouseVelocity();
     
     updateAndDrawParticles(ctx);
     
@@ -18,99 +22,7 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-function updateAndDrawOutlines(outlineCtx) {
-    if (outlinePoints.length === 0) return;
-    
-    for (let i = 0; i < outlinePoints.length; i++) {
-        const p = outlinePoints[i];
 
-        if (isPressed) {
-            const dx = mouseX - p.x;
-            const dy = mouseY - p.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            const pressDuration = (Date.now() - pressTime) / 1000;
-            const forceFactor = Math.min(pressDuration * 0.8, 3);
-
-            const force = (CONFIG.ATTRACTION_STRENGTH * 0.7 * forceFactor) / (1 + distance * 0.02);
-
-            const angle = Math.atan2(dy, dx);
-            p.vx += Math.cos(angle) * force * 0.001;
-            p.vy += Math.sin(angle) * force * 0.001;
-
-            const maxSpeed = 8 + forceFactor * 3;
-            const currentSpeed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-            if (currentSpeed > maxSpeed) {
-                p.vx = (p.vx / currentSpeed) * maxSpeed;
-                p.vy = (p.vy / currentSpeed) * maxSpeed;
-            }
-        } else {
-            const dx = p.originalX - p.x;
-            const dy = p.originalY - p.y;
-            const distanceToOrigin = Math.sqrt(dx * dx + dy * dy);
-
-            if (distanceToOrigin > 0.5) {
-                const returnSpeed = 0.06;
-                p.x += dx * returnSpeed;
-                p.y += dy * returnSpeed;
-                p.vx = 0;
-                p.vy = 0;
-            } else {
-                p.x = p.originalX;
-                p.y = p.originalY;
-                p.vx = 0;
-                p.vy = 0;
-            }
-        }
-
-        p.vx *= CONFIG.FRICTION;
-        p.vy *= CONFIG.FRICTION;
-
-        p.x += p.vx;
-        p.y += p.vy;
-    }
-
-    drawOutlines(outlineCtx);
-}
-
-function drawOutlines(outlineCtx) {
-    outlineCtx.save();
-
-    drawOutlinePath(outlineCtx, 'rgba(255, 100, 0, 0.7)', 3);
-    
-    drawOutlinePath(outlineCtx, '#fff', 1.5);
-    
-    for (let i = 0; i < outlinePoints.length; i += 3) {
-        const p = outlinePoints[i];
-        outlineCtx.beginPath();
-        outlineCtx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-        outlineCtx.fillStyle = '#fff';
-        outlineCtx.fill();
-    }
-
-    outlineCtx.restore();
-}
-
-function drawOutlinePath(ctx, color, lineWidth) {
-    ctx.beginPath();
-    ctx.moveTo(outlinePoints[0].x, outlinePoints[0].y);
-
-    for (let i = 1; i < outlinePoints.length; i++) {
-        const p = outlinePoints[i];
-        const prev = outlinePoints[i - 1];
-        const distance = Math.sqrt((p.x - prev.x) ** 2 + (p.y - prev.y) ** 2);
-
-        if (distance < CONFIG.FONT_SIZE) {
-            ctx.lineTo(p.x, p.y);
-        } else {
-            ctx.moveTo(p.x, p.y);
-        }
-    }
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.stroke();
-}
 
 function updateAndDrawParticles(ctx) {
     for (let i = 0; i < particles.length; i++) {
@@ -131,17 +43,22 @@ function updateAndDrawParticles(ctx) {
 }
 
 function updateParticleSize(p) {
-    if (p.growing) {
-        p.size += CONFIG.PARTICLE_CHANGE_SPEED;
-        if (p.size > CONFIG.PARTICLE_SIZE + CONFIG.PARTICLE_CHANGE_SIZE) {
-            p.growing = false;
+    if (isMouseMoving() || isPressed) {
+        if (p.growing) {
+            p.size += CONFIG.PARTICLE_CHANGE_SPEED;
+            if (p.size > CONFIG.PARTICLE_SIZE + CONFIG.PARTICLE_CHANGE_SIZE) {
+                p.growing = false;
+            }
+        } else {
+            p.size -= CONFIG.PARTICLE_CHANGE_SPEED;
+            if (p.size < p.minSize) {
+                p.growing = true;
+                p.size = p.minSize;
+            }
         }
-    } else {
-        p.size -= CONFIG.PARTICLE_CHANGE_SPEED;
-        if (p.size < p.minSize) {
-            p.growing = true;
-            p.size = p.minSize;
-        }
+    }
+    else {
+        p.size = p.minSize + (CONFIG.PARTICLE_SIZE - p.minSize) / 2;
     }
 }
 
@@ -166,7 +83,20 @@ function updateTextParticle(p) {
             p.vx = (p.vx / currentSpeed) * maxSpeed;
             p.vy = (p.vy / currentSpeed) * maxSpeed;
         }
-    } else {
+    } 
+    else if (isMouseMoving()) {
+        p.vx += mouseVelocityX * 0.001;
+        p.vy += mouseVelocityY * 0.001;
+        
+        const maxSpeed = 2;
+        const currentSpeed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        if (currentSpeed > maxSpeed) {
+            p.vx = (p.vx / currentSpeed) * maxSpeed;
+            p.vy = (p.vy / currentSpeed) * maxSpeed;
+        }
+    }
+    
+    if (p.x !== p.originalX || p.y !== p.originalY) {
         const dx = p.originalX - p.x;
         const dy = p.originalY - p.y;
         const distanceToOrigin = Math.sqrt(dx * dx + dy * dy);
@@ -175,25 +105,26 @@ function updateTextParticle(p) {
             const returnSpeed = 0.06;
             p.x += dx * returnSpeed;
             p.y += dy * returnSpeed;
-            p.vx = 0;
-            p.vy = 0;
         } else {
             p.x = p.originalX;
             p.y = p.originalY;
             p.vx = 0;
             p.vy = 0;
         }
+    } else {
+     
+        if (!isMouseMoving() && !isPressed) {
+            p.vx = 0;
+            p.vy = 0;
+        }
     }
 
-  
     p.vx *= CONFIG.FRICTION;
     p.vy *= CONFIG.FRICTION;
-
 
     p.x += p.vx;
     p.y += p.vy;
 }
-
 
 function updateOrbitalParticle(p) {
     if (isPressed) {
@@ -262,8 +193,6 @@ function drawParticle(ctx, p) {
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
         ctx.lineTo(p.x - (p.vx * trailLength) / speed, p.y - (p.vy * trailLength) / speed);
-        ctx.strokeStyle = p.color.replace('rgb', 'rgba').replace(')', ', 0.3)');
-        ctx.lineWidth = p.size * 0.8;
         ctx.stroke();
     }
 
@@ -308,9 +237,6 @@ function drawExplosionParticle(ctx, p) {
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
         ctx.lineTo(p.x - p.vx * 3, p.y - p.vy * 3);
-        ctx.strokeStyle = p.color.replace('rgb', 'rgba').replace(')', `, ${p.life * 0.5})`);
-        ctx.lineWidth = p.size * 0.7;
-        ctx.stroke();
     }
 
     ctx.beginPath();

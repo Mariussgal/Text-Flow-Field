@@ -134,3 +134,11 @@ function setupMouseEvents() {
      
     });
 }
+
+function updateMouseVelocity() {
+    mouseVelocityX *= 0.9;
+    mouseVelocityY *= 0.9;
+    
+    if (Math.abs(mouseVelocityX) < 0.1) mouseVelocityX = 0;
+    if (Math.abs(mouseVelocityY) < 0.1) mouseVelocityY = 0;
+}
