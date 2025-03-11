@@ -152,42 +152,40 @@ function updateOrbitalParticle(p) {
 
         p.vx *= CONFIG.FRICTION;
         p.vy *= CONFIG.FRICTION;
+        
+        p.returnStartX = undefined;
+        p.returnStartY = undefined;
+        p.returnProgress = 0;
     } else {
-        if (hasExploded) {
-            if (p.returnStartX === undefined) {
-                p.returnStartX = p.x;
-                p.returnStartY = p.y;
-                p.returnProgress = 0;
-                
-                p.targetOrbitX = p.centerX + Math.cos(p.angle) * p.radius;
-                p.targetOrbitY = p.centerY + Math.sin(p.angle) * p.radius;
-            }
-            
-            p.returnProgress += 0.01; 
-            if (p.returnProgress > 1) p.returnProgress = 1;
-            
-            const t = easeOutQuint(p.returnProgress);
-            
-            p.x = p.returnStartX + (p.targetOrbitX - p.returnStartX) * t;
-            p.y = p.returnStartY + (p.targetOrbitY - p.returnStartY) * t;
-            
-            p.angle += p.speed * 0.01;
+        hasExploded = true;
+        
+        if (p.returnStartX === undefined) {
+            p.returnStartX = p.x;
+            p.returnStartY = p.y;
+            p.returnProgress = 0;
             
             p.targetOrbitX = p.centerX + Math.cos(p.angle) * p.radius;
             p.targetOrbitY = p.centerY + Math.sin(p.angle) * p.radius;
-            
-            if (p.returnProgress >= 1) {
-                p.returnStartX = undefined;
-                p.returnStartY = undefined;
-                p.targetOrbitX = undefined;
-                p.targetOrbitY = undefined;
-                p.vx = 0;
-                p.vy = 0;
-            }
-        } else {
-            p.angle += p.speed * 0.01;
-            p.x = p.centerX + Math.cos(p.angle) * p.radius;
-            p.y = p.centerY + Math.sin(p.angle) * p.radius;
+        }
+        
+        p.returnProgress += 0.01; 
+        if (p.returnProgress > 1) p.returnProgress = 1;
+        
+        const t = easeOutQuint(p.returnProgress);
+        
+        p.x = p.returnStartX + (p.targetOrbitX - p.returnStartX) * t;
+        p.y = p.returnStartY + (p.targetOrbitY - p.returnStartY) * t;
+        
+        p.angle += p.speed * 0.01;
+        
+        p.targetOrbitX = p.centerX + Math.cos(p.angle) * p.radius;
+        p.targetOrbitY = p.centerY + Math.sin(p.angle) * p.radius;
+        
+        if (p.returnProgress >= 1) {
+            p.returnStartX = undefined;
+            p.returnStartY = undefined;
+            p.targetOrbitX = undefined;
+            p.targetOrbitY = undefined;
             p.vx = 0;
             p.vy = 0;
         }
