@@ -159,7 +159,7 @@ function createParticles() {
             originalY: y,
             size: CONFIG.PARTICLE_SIZE * (0.5 + Math.random()),
             minSize: CONFIG.MIN_PARTICLE_SIZE,
-            color: `rgb(255, ${70 + Math.floor(Math.random() * 100)}, 0)`,
+            color: `rgb(255, ${120 + Math.floor(Math.random() * 100)}, ${30 + Math.floor(Math.random() * 50)})`, // Plus lumineux
             angle: angle,
             speed: 0.1 + Math.random() * 0.3,
             centerX: centerX,

@@ -43,7 +43,7 @@ function updateAndDrawParticles(ctx) {
 }
 
 function updateParticleSize(p) {
-    if (isMouseMoving() || isPressed) {
+    if (isPressed) {
         if (p.growing) {
             p.size += CONFIG.PARTICLE_CHANGE_SPEED;
             if (p.size > CONFIG.PARTICLE_SIZE + CONFIG.PARTICLE_CHANGE_SIZE) {
@@ -58,7 +58,7 @@ function updateParticleSize(p) {
         }
     }
     else {
-        p.size = p.minSize + (CONFIG.PARTICLE_SIZE - p.minSize) / 2;
+        p.size = p.minSize;
     }
 }
 
@@ -83,47 +83,34 @@ function updateTextParticle(p) {
             p.vx = (p.vx / currentSpeed) * maxSpeed;
             p.vy = (p.vy / currentSpeed) * maxSpeed;
         }
-    } 
-    else if (isMouseMoving()) {
-        p.vx += mouseVelocityX * 0.001;
-        p.vy += mouseVelocityY * 0.001;
         
-        const maxSpeed = 2;
-        const currentSpeed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-        if (currentSpeed > maxSpeed) {
-            p.vx = (p.vx / currentSpeed) * maxSpeed;
-            p.vy = (p.vy / currentSpeed) * maxSpeed;
+        p.x += p.vx;
+        p.y += p.vy;
+        
+        p.vx *= CONFIG.FRICTION;
+        p.vy *= CONFIG.FRICTION;
+    } 
+    else {
+        if (p.x !== p.originalX || p.y !== p.originalY) {
+            const dx = p.originalX - p.x;
+            const dy = p.originalY - p.y;
+            const distanceToOrigin = Math.sqrt(dx * dx + dy * dy);
+
+            if (distanceToOrigin > 0.5) {
+                const returnSpeed = 0.06;
+                p.x += dx * returnSpeed;
+                p.y += dy * returnSpeed;
+            } else {
+                p.x = p.originalX;
+                p.y = p.originalY;
+                p.vx = 0;
+                p.vy = 0;
+            }
         }
+        
+        p.vx = 0;
+        p.vy = 0;
     }
-    
-    if (p.x !== p.originalX || p.y !== p.originalY) {
-        const dx = p.originalX - p.x;
-        const dy = p.originalY - p.y;
-        const distanceToOrigin = Math.sqrt(dx * dx + dy * dy);
-
-        if (distanceToOrigin > 0.5) {
-            const returnSpeed = 0.06;
-            p.x += dx * returnSpeed;
-            p.y += dy * returnSpeed;
-        } else {
-            p.x = p.originalX;
-            p.y = p.originalY;
-            p.vx = 0;
-            p.vy = 0;
-        }
-    } else {
-     
-        if (!isMouseMoving() && !isPressed) {
-            p.vx = 0;
-            p.vy = 0;
-        }
-    }
-
-    p.vx *= CONFIG.FRICTION;
-    p.vy *= CONFIG.FRICTION;
-
-    p.x += p.vx;
-    p.y += p.vy;
 }
 
 function updateOrbitalParticle(p) {
