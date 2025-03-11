@@ -87,7 +87,6 @@ function setupMouseEvents() {
     const cursor = document.querySelector('.cursor');
 
     document.addEventListener('mousemove', (e) => {
-        
         mouseVelocityX = e.clientX - mouseX;
         mouseVelocityY = e.clientY - mouseY;
 
@@ -96,11 +95,8 @@ function setupMouseEvents() {
         mouseX = e.clientX;
         mouseY = e.clientY;
 
-      
         cursor.style.left = `${mouseX}px`;
         cursor.style.top = `${mouseY}px`;
-
-     
     });
 
     document.addEventListener('mousedown', () => {
@@ -108,30 +104,27 @@ function setupMouseEvents() {
         pressTime = Date.now();
         hasExploded = false;
 
-
         cursor.style.transform = 'translate(-50%, -50%) scale(0.5)';
         cursor.style.backgroundColor = 'rgba(255, 69, 0, 0.9)';
         cursor.style.boxShadow = '0 0 15px rgba(255, 69, 0, 0.8)';
-
-
-
+        
+        // Réinitialiser les propriétés de retour pour toutes les particules
+        particles.forEach(p => {
+            p.returnStartX = undefined;
+            p.returnStartY = undefined;
+            p.returnProgress = 0;
+        });
     });
 
     document.addEventListener('mouseup', () => {
         isPressed = false;
         releaseTime = Date.now();
 
-   
         cursor.style.transform = 'translate(-50%, -50%) scale(1)';
         cursor.style.backgroundColor = 'rgba(255, 69, 0, 0.5)';
         cursor.style.boxShadow = '0 0 0 rgba(255, 69, 0, 0)';
 
-     
-
         createExplosion();
-
-    
-     
     });
 }
 

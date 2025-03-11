@@ -92,35 +92,46 @@ function updateTextParticle(p) {
     } 
     else {
         if (p.x !== p.originalX || p.y !== p.originalY) {
-            const dx = p.originalX - p.x;
-            const dy = p.originalY - p.y;
-            const distanceToOrigin = Math.sqrt(dx * dx + dy * dy);
-
-            if (distanceToOrigin > 0.5) {
-                const returnSpeed = 0.06;
-                p.x += dx * returnSpeed;
-                p.y += dy * returnSpeed;
-            } else {
+            if (p.returnStartX === undefined) {
+                p.returnStartX = p.x;
+                p.returnStartY = p.y;
+                p.returnProgress = 0;
+            }
+            
+            p.returnProgress += 0.008; 
+            if (p.returnProgress > 1) p.returnProgress = 1;
+            
+            const t = easeOutQuint(p.returnProgress);
+            
+            p.x = p.returnStartX + (p.originalX - p.returnStartX) * t;
+            p.y = p.returnStartY + (p.originalY - p.returnStartY) * t;
+            
+            if (p.returnProgress >= 1) {
                 p.x = p.originalX;
                 p.y = p.originalY;
                 p.vx = 0;
                 p.vy = 0;
+                p.returnStartX = undefined;
+                p.returnStartY = undefined;
             }
         }
-        
-        p.vx = 0;
-        p.vy = 0;
     }
+}
+
+function easeOutCubic(x) {
+    return 1 - Math.pow(1 - x, 3);
+}
+
+function easeOutQuint(x) {
+    return 1 - Math.pow(1 - x, 5);
 }
 
 function updateOrbitalParticle(p) {
     if (isPressed) {
-        
         const dx = mouseX - p.x;
         const dy = mouseY - p.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-      
         const pressDuration = (Date.now() - pressTime) / 1000;
         const forceFactor = Math.min(pressDuration * 1.5, 5);
         const force = CONFIG.ATTRACTION_STRENGTH * 1.5 * forceFactor / (1 + distance * 0.005);
@@ -129,7 +140,6 @@ function updateOrbitalParticle(p) {
         p.vx += Math.cos(angle) * force * 0.002;
         p.vy += Math.sin(angle) * force * 0.002;
 
-       
         const maxSpeed = 15 + forceFactor * 5;
         const currentSpeed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
         if (currentSpeed > maxSpeed) {
@@ -137,30 +147,44 @@ function updateOrbitalParticle(p) {
             p.vy = (p.vy / currentSpeed) * maxSpeed;
         }
 
-    
         p.x += p.vx;
         p.y += p.vy;
 
-       
         p.vx *= CONFIG.FRICTION;
         p.vy *= CONFIG.FRICTION;
     } else {
-        if (hasExploded && Date.now() - releaseTime < 2000) {
+        if (hasExploded) {
+            if (p.returnStartX === undefined) {
+                p.returnStartX = p.x;
+                p.returnStartY = p.y;
+                p.returnProgress = 0;
+                
+                p.targetOrbitX = p.centerX + Math.cos(p.angle) * p.radius;
+                p.targetOrbitY = p.centerY + Math.sin(p.angle) * p.radius;
+            }
             
-            const targetX = p.centerX + Math.cos(p.angle) * p.radius;
-            const targetY = p.centerY + Math.sin(p.angle) * p.radius;
-
-           
-            const returnSpeed = 0.08;
-            p.x += (targetX - p.x) * returnSpeed;
-            p.y += (targetY - p.y) * returnSpeed;
-            p.vx = 0;
-            p.vy = 0;
-
-          
+            p.returnProgress += 0.01; 
+            if (p.returnProgress > 1) p.returnProgress = 1;
+            
+            const t = easeOutQuint(p.returnProgress);
+            
+            p.x = p.returnStartX + (p.targetOrbitX - p.returnStartX) * t;
+            p.y = p.returnStartY + (p.targetOrbitY - p.returnStartY) * t;
+            
             p.angle += p.speed * 0.01;
+            
+            p.targetOrbitX = p.centerX + Math.cos(p.angle) * p.radius;
+            p.targetOrbitY = p.centerY + Math.sin(p.angle) * p.radius;
+            
+            if (p.returnProgress >= 1) {
+                p.returnStartX = undefined;
+                p.returnStartY = undefined;
+                p.targetOrbitX = undefined;
+                p.targetOrbitY = undefined;
+                p.vx = 0;
+                p.vy = 0;
+            }
         } else {
-          
             p.angle += p.speed * 0.01;
             p.x = p.centerX + Math.cos(p.angle) * p.radius;
             p.y = p.centerY + Math.sin(p.angle) * p.radius;
